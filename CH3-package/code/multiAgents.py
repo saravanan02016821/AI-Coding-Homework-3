@@ -75,7 +75,29 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        score = successorGameState.getScore()
+        foodList = newFood.asList()
+
+        if foodList:
+            foodDistance = min(util.manhattanDistance(newPos, food) for food in foodList)
+            score += 10 / (foodDistance + 1)
+
+        score -= 4 * len(foodList)
+
+        for ghost in newGhostStates:
+            distance = util.manhattanDistance(newPos, ghost.getPosition())
+
+            if ghost.scaredTimer > 0:
+                score += 15 / (distance + 1)
+            elif distance == 0:
+                score -= 1000
+            else:
+                score -= 10 / distance
+
+        if action == Directions.STOP:
+            score -= 10
+
+        return score
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
@@ -173,7 +195,42 @@ def betterEvaluationFunction(currentGameState: GameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if currentGameState.isWin():
+        return float("inf")
+
+    if currentGameState.isLose():
+        return float("-inf")
+
+    pacmanPos = currentGameState.getPacmanPosition()
+    food = currentGameState.getFood().asList()
+    ghosts = currentGameState.getGhostStates()
+    capsules = currentGameState.getCapsules()
+
+    score = currentGameState.getScore()
+
+    score -= 4 * len(food)
+    score -= 15 * len(capsules)
+
+    if food:
+        foodDistance = min(
+            util.manhattanDistance(pacmanPos, position)
+            for position in food
+        )
+        score += 10 / (foodDistance + 1)
+
+    for ghost in ghosts:
+        distance = util.manhattanDistance(
+            pacmanPos, ghost.getPosition()
+        )
+
+        if ghost.scaredTimer > 0:
+            score += 20 / (distance + 1)
+        elif distance <= 1:
+            score -= 100
+        else:
+            score -= 10 / distance
+
+    return score
 
 # Abbreviation
 better = betterEvaluationFunction
